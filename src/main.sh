@@ -6,11 +6,13 @@ declare SCRIPT_DIR=
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Variables de configuración
-declare -x c_host
+declare  -x c_host
 declare -ix c_port
-declare -x c_database
-declare -x c_username
-declare -x c_password
+declare  -x c_database
+declare  -x c_username
+declare  -x c_password
+
+declare  -x c_target_directory='.'
 
 function f_import_env()
 {
@@ -79,6 +81,7 @@ declare -i r=0
 declare -i opt_b=0 # Respaldo (por defecto si no se pasa --no-backup)
 declare -i opt_e=-1 # Exportar
 declare -i opt_i=-1 # Importar
+declare    opt_t='.' # Target dir
 
 
 
@@ -89,8 +92,7 @@ function f_backup
 
     hora=$(date +%Y-%m-%d_%H.%M.%S)
 
-    t_file="backups/${c_database}_${hora}.sql.gz"
-    t_file="${c_database}_${hora}.sql.gz"
+    t_file="${c_target_directory}/${c_database}_${hora}.sql.gz"
 
     mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -h "${c_host}" -u "${c_username}" --password="${c_password}" "${c_database}" | gzip -c > "${t_file}"
 
@@ -100,7 +102,7 @@ function f_backup
 # Reemplaza el SQL actual
 function f_export
 {
-    t_file="${c_database}.sql"
+    t_file="${c_target_directory}/${c_database}.sql"
 
     mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -h "${c_host}" -u "${c_username}" --password="${c_password}" "${c_database}" > "${t_file}"
 
@@ -111,7 +113,7 @@ function f_export
 
 function f_import
 {
-    t_file="${c_database}.sql"
+    t_file="${c_target_directory}/${c_database}.sql"
 
     mysql -h "${c_host}" -u "${c_username}" --password="${c_password}" "${c_database}" < "${t_file}"
 
@@ -143,11 +145,38 @@ while [[ $# -gt 0 ]]; do
             shift
         ;;
 
+        -t|--target)
+            shift
+            opt_t="${1}"
+            shift
+        ;;
+
         *)    # Opción desconocida
             shift
         ;;
     esac
 done
+
+# Comprobar/normalizar directorio
+c_target_directory=$(realpath "$opt_t")
+r=$?
+
+if [[ $r -ne 0 ]]; then
+    echo "Error: -t|--target '${opt_t}'. Ruta inválida."
+    exit 3
+fi
+
+if [[ ! -d $c_target_directory ]]; then
+    echo "Directorio '${c_target_directory}' no existe. Intentando crear..."
+    mkdir -p "${c_target_directory}"
+    r=$?
+
+    if [[ $r -ne 0 ]]; then
+        echo "Error: -t|--target '${opt_t}'. No se pudo crear el directorio '${c_target_directory}'"
+        exit 3
+    fi
+fi
+
 
 r=0
 if [[ $opt_b -eq 0 ]]; then
