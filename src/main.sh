@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Realiza operaciones de importar, exportar y hacer respaldos de la base de datos.
 
