@@ -5,6 +5,10 @@
 declare SCRIPT_DIR=
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+if [[ -z $DB_HOST ]]; then
+    declare DB_HOST='localhost'
+fi
+
 if [[ -z $DB_NAME ]]; then
     echo 'Error: "DB_NAME" no está definido'
     exit 1
@@ -38,7 +42,7 @@ function f_backup
 
     file="backups/${DB_NAME}_${hora}.sql.gz"
 
-    mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" | gzip -c > "${file}"
+    mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" | gzip -c > "${file}"
 
     return $?
 }
@@ -48,7 +52,7 @@ function f_export
 {
     file="${DB_NAME}.sql"
 
-    mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" > "${file}"
+    mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" > "${file}"
 
     return $?
 }
@@ -59,7 +63,7 @@ function f_import
 {
     file="${DB_NAME}.sql"
 
-    mysql -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" < "${file}"
+    mysql -h "${DB_HOST}" -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" < "${file}"
 
     return $?
 }
