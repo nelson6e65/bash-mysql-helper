@@ -6,15 +6,18 @@ declare SCRIPT_DIR=
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [[ -z $DB_NAME ]]; then
-    declare -x DB_NAME=
+    echo 'Error: "DB_NAME" no está definido'
+    exit 1
 fi
 
 if [[ -z $DB_USERNAME ]]; then
-    declare -x DB_USERNAME=
+    echo 'Error: "DB_USERNAME" no está definido'
+    exit 1
 fi
 
 if [[ -z $DB_PASSWORD ]]; then
-    declare -x DB_PASSWORD=
+    echo 'Error: "DB_PASSWORD" no está definido'
+    exit 1
 fi
 
 declare file=
@@ -33,9 +36,9 @@ function f_backup
 
     hora=$(date +%Y-%m-%d_%H.%M.%S)
 
-    file="${SCRIPT_DIR}/backups/${DB_NAME}_${hora}.sql.gz"
+    file="backups/${DB_NAME}_${hora}.sql.gz"
 
-    mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -u ${DB_USERNAME} --password=${DB_PASSWORD} ${DB_NAME} | gzip -c > "${file}"
+    mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" | gzip -c > "${file}"
 
     return $?
 }
@@ -43,9 +46,9 @@ function f_backup
 # Reemplaza el SQL actual
 function f_export
 {
-    file="${SCRIPT_DIR}/${DB_NAME}.sql"
+    file="${DB_NAME}.sql"
 
-    mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -u ${DB_USERNAME} --password=${DB_PASSWORD} ${DB_NAME} > "${file}"
+    mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" > "${file}"
 
     return $?
 }
@@ -54,9 +57,9 @@ function f_export
 
 function f_import
 {
-    file="${SCRIPT_DIR}/${DB_NAME}.sql"
+    file="${DB_NAME}.sql"
 
-    mysql -u ${DB_USERNAME} --password=${DB_PASSWORD} ${DB_NAME} < "${file}"
+    mysql -u "${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_NAME}" < "${file}"
 
     return $?
 }
