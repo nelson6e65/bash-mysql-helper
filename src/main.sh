@@ -90,6 +90,7 @@ function f_backup
     hora=$(date +%Y-%m-%d_%H.%M.%S)
 
     t_file="backups/${c_database}_${hora}.sql.gz"
+    t_file="${c_database}_${hora}.sql.gz"
 
     mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -h "${c_host}" -u "${c_username}" --password="${c_password}" "${c_database}" | gzip -c > "${t_file}"
 
