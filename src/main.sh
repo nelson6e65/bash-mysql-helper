@@ -2,8 +2,11 @@
 
 # Realiza operaciones de importar, exportar y hacer respaldos de la base de datos.
 
-declare SCRIPT_DIR=
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+declare -x SCRIPT_DIR=
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
+# shellcheck source=args-parser.sh
+. "${SCRIPT_DIR}/args-parser.sh"
 
 # Variables de configuración
 declare  -x c_host
@@ -12,7 +15,9 @@ declare  -x c_database
 declare  -x c_username
 declare  -x c_password
 
-declare  -x c_target_directory='.'
+declare -i r=0
+declare t_file=
+
 
 function f_import_env()
 {
@@ -71,17 +76,10 @@ f_import_env
 r=$?
 
 if [[ $r -ne 0   ]]; then
-    echo 'Ocurrió un error al obtener los credenciales de la base de datos'
-    exit $r
+    die 'Ocurrió un error al obtener los credenciales de la base de datos' $r
 fi
 
-declare t_file=
 
-declare -i r=0
-declare -i opt_b=0 # Respaldo (por defecto si no se pasa --no-backup)
-declare -i opt_e=-1 # Exportar
-declare -i opt_i=-1 # Importar
-declare    opt_t='.' # Target dir
 
 
 
@@ -109,8 +107,8 @@ function f_export
     return $?
 }
 
-##*
 
+# Importa la BD desde el SQL
 function f_import
 {
     t_file="${c_target_directory}/${c_database}.sql"
@@ -121,65 +119,9 @@ function f_import
 }
 
 
-while [[ $# -gt 0 ]]; do
-    key="$1"
-
-    case $key in
-        -e|--export|export)
-            opt_e=0
-            opt_i=-1
-            shift
-        ;;
-
-        # -b|--backup|backup)
-        #     opt_b=0
-        #     shift
-        # ;;
-        --no-backup)
-            opt_b=-1
-            shift
-        ;;
-        -i|--import|import)
-            opt_i=0
-            opt_e=-1
-            shift
-        ;;
-
-        -t|--target)
-            shift
-            opt_t="${1}"
-            shift
-        ;;
-
-        *)    # Opción desconocida
-            shift
-        ;;
-    esac
-done
-
-# Comprobar/normalizar directorio
-c_target_directory=$(realpath "$opt_t")
-r=$?
-
-if [[ $r -ne 0 ]]; then
-    echo "Error: -t|--target '${opt_t}'. Ruta inválida."
-    exit 3
-fi
-
-if [[ ! -d $c_target_directory ]]; then
-    echo "Directorio '${c_target_directory}' no existe. Intentando crear..."
-    mkdir -p "${c_target_directory}"
-    r=$?
-
-    if [[ $r -ne 0 ]]; then
-        echo "Error: -t|--target '${opt_t}'. No se pudo crear el directorio '${c_target_directory}'"
-        exit 3
-    fi
-fi
-
 
 r=0
-if [[ $opt_b -eq 0 ]]; then
+if [[ ${run_backup:?} == on ]]; then
     echo "Respaldando Base de Datos '${c_database}'..."
 
     f_backup
@@ -196,7 +138,7 @@ if [[ $opt_b -eq 0 ]]; then
 fi
 
 if [[ $r -eq 0 ]]; then
-    if [[ $opt_e -eq 0 ]]; then
+    if [[ ${run_export:?} == on ]]; then
         echo "Exportando Base de Datos '${c_database}'..."
 
         f_export
@@ -213,7 +155,7 @@ if [[ $r -eq 0 ]]; then
 fi
 
 if [[ $r -eq 0 ]]; then
-    if [[ $opt_i -eq 0 ]]; then
+    if [[ ${run_import:?} == on ]]; then
         echo "Importando Base de Datos '${c_database}'..."
 
         f_import
