@@ -1,5 +1,5 @@
 NAME          = mysql-helper
-VERSION       = $(shell git describe)
+VERSION       = v0.1.0
 HORA          = $(shell date --iso=second)
 hora          = $(shell date +'%F %T')
 F_ARGS_PARSER = src/args-parser.sh
@@ -20,7 +20,7 @@ build:
 	@echo '[ BUILD ] ============================================================='
 	@echo '[ Update version file ] -----------------------------------------------'
 	@echo "Version: ${VERSION}"
-	@echo "# ARG_OPTIONAL_ACTION([version], , [Display the version you are using.], [echo '${NAME} ${VERSION}'])" > version.m4
+	@echo "# ARG_OPTIONAL_ACTION([version], , [Display the version you are using.], [echo -n '${NAME}'; f_version ${VERSION}])" > version.m4
 	@echo "Done!"
 	@echo
 	@echo '[ Generate arguments parser ]-----------------------------------------'

@@ -11,6 +11,32 @@ Commands available (<command>):
 
 declare DESCRIPTION='Export, import and backup MySQL/MariaDB databases'
 
+
+function f_version
+{
+    declare version
+    declare -i r=0
+
+
+    # Intentar usar git describe para una versión más exacta
+    which git >/dev/null 2> /dev/null
+    r=$? # ¿Git está instalado?
+    if [ $r -eq 0 ]; then
+        t="$(cd ${SCRIPT_DIR:?} && git describe 2> /dev/null)"
+        r=$? # ¿Fue instalado como repositorio git y tiene nombres para describir?
+    fi
+
+    if [ $r -eq 0 ]; then
+        version="$(cd ${SCRIPT_DIR} && git describe --abbrev=1)"
+        version="${version%-g*}"
+    else
+        version=${1:-Undefined}
+    fi
+
+    echo " ${version}"
+}
+
+
 # DEFINE_SCRIPT_DIR()
 # ARG_POSITIONAL_SINGLE([command],[Command to perform.],[])
 # ARG_POSITIONAL_SINGLE([target-dir],[Target directory to search/place SQL.],[.])
@@ -113,7 +139,7 @@ parse_commandline()
 				fi
 				;;
 			--version)
-				echo 'mysql-helper v0.1.0'
+				echo -n 'mysql-helper'; f_version v0.1.0
 				exit 0
 				;;
 			*)
