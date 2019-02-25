@@ -41,6 +41,7 @@ function f_version
 # ARG_POSITIONAL_SINGLE([command],[Command to perform.],[])
 # ARG_POSITIONAL_SINGLE([target-dir],[Target directory to search/place SQL.],[.])
 # ARG_OPTIONAL_SINGLE([target],[t],[[DEPRECATED] Use «<target-dir>» instead.],[])
+# ARG_OPTIONAL_SINGLE([backups-dir],[],[Directory for backups. Default to «<target-dir>/backups/».],[auto])
 # ARG_OPTIONAL_BOOLEAN([auto-backup],[],[Run «backup» before «import».],[on])
 # ARG_HELP([$DESCRIPTION\n],[$HELP_DETAILS])
 #
@@ -77,6 +78,7 @@ _positionals=()
 _arg_target_dir="."
 # THE DEFAULTS INITIALIZATION - OPTIONALS
 _arg_target=
+_arg_backups_dir="auto"
 _arg_auto_backup="on"
 _arg_verbose=0
 
@@ -85,10 +87,11 @@ print_help()
 {
 	printf '%s\n' "$DESCRIPTION
 		"
-	printf 'Usage: %s [-t|--target <arg>] [--(no-)auto-backup] [-h|--help] [-v|--verbose] [--version] <command> [<target-dir>]\n' "$0"
+	printf 'Usage: %s [-t|--target <arg>] [--backups-dir <arg>] [--(no-)auto-backup] [-h|--help] [-v|--verbose] [--version] <command> [<target-dir>]\n' "$0"
 	printf '\t%s\n' "<command>: Command to perform."
 	printf '\t%s\n' "<target-dir>: Target directory to search/place SQL. (default: '.')"
 	printf '\t%s\n' "-t, --target: [DEPRECATED] Use «<target-dir>» instead. (no default)"
+	printf '\t%s\n' "--backups-dir: Directory for backups. Default to «<target-dir>/backups/». (default: 'auto')"
 	printf '\t%s\n' "--auto-backup, --no-auto-backup: Run «backup» before «import». (on by default)"
 	printf '\t%s\n' "-h, --help: Prints help"
 	printf '\t%s\n' "-v, --verbose: Set verbose output (can be specified multiple times to increase the effect)"
@@ -114,6 +117,14 @@ parse_commandline()
 				;;
 			-t*)
 				_arg_target="${_key##-t}"
+				;;
+			--backups-dir)
+				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+				_arg_backups_dir="$2"
+				shift
+				;;
+			--backups-dir=*)
+				_arg_backups_dir="${_key##--backups-dir=}"
 				;;
 			--no-auto-backup|--auto-backup)
 				_arg_auto_backup="on"
@@ -191,6 +202,7 @@ declare -x run_backup=off
 declare -x run_export=off
 declare -x run_import=off
 declare -x c_target_directory='.'
+declare -x c_backups_directory
 declare -x _PRINT_HELP=yes
 
 function f_setup_command
@@ -239,7 +251,7 @@ function f_setup_command
 }
 
 
-function f_setup_target
+function f_setup_directories
 {
     declare dir="${_arg_target_dir:?}"
     declare -i r=$?
@@ -253,7 +265,7 @@ function f_setup_target
     fi
 
     # Comprobar/normalizar directorio
-    c_target_directory=$(realpath "${dir}")
+    c_target_directory="$(realpath "${dir}")"
     r=$?
 
     if [[ $r -ne 0 ]]; then
@@ -269,11 +281,34 @@ function f_setup_target
             die "ERROR: <target-dir> «${dir}». No se pudo crear el directorio «${c_target_directory}»" 3
         fi
     fi
+
+    if [[ $run_backup == on ]]; then
+        c_backups_directory="${c_target_directory}/backups"
+
+        if [[ ${_arg_backups_dir:?} != auto ]]; then
+            c_backups_directory="$(realpath "${_arg_backups_dir}")"
+            r=$?
+        fi
+
+        if [[ $r -ne 0 ]]; then
+            die "ERROR: --backups-dir «${_arg_backups_dir}». Ruta inválida." 3
+        fi
+
+        if [[ ! -d $c_backups_directory ]]; then
+            echo "Directorio «${c_backups_directory}» no existe. Intentando crear..."
+            mkdir -p "${c_backups_directory}"
+            r=$?
+
+            if [[ $r -ne 0 ]]; then
+                die "ERROR: --backups-dir. No se pudo crear el directorio «${c_backups_directory}»" 3
+            fi
+        fi
+    fi
 }
 
 f_setup_command "${_arg_command:?}"
 
-f_setup_target "${_arg_target_dir:?}"
+f_setup_directories "${_arg_target_dir:?}"
 
 echo "${_arg_target_dir}"
 echo "${_arg_target}"

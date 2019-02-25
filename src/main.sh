@@ -90,7 +90,7 @@ function f_backup
 
     hora=$(date +%Y-%m-%d_%H.%M.%S)
 
-    t_file="${c_target_directory}/${c_database}_${hora}.sql.gz"
+    t_file="${c_backups_directory:?}/${c_database}_${hora}.sql.gz"
 
     mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -h "${c_host}" -u "${c_username}" --password="${c_password}" "${c_database}" | gzip -c > "${t_file}"
 
@@ -100,7 +100,7 @@ function f_backup
 # Reemplaza el SQL actual
 function f_export
 {
-    t_file="${c_target_directory}/${c_database}.sql"
+    t_file="${c_target_directory:?}/${c_database}.sql"
 
     mysqldump -v --opt --events --routines --triggers --default-character-set=utf8mb4 -h "${c_host}" -u "${c_username}" --password="${c_password}" "${c_database}" > "${t_file}"
 
@@ -111,7 +111,7 @@ function f_export
 # Importa la BD desde el SQL
 function f_import
 {
-    t_file="${c_target_directory}/${c_database}.sql"
+    t_file="${c_target_directory:?}/${c_database}.sql"
 
     mysql -h "${c_host}" -u "${c_username}" --password="${c_password}" "${c_database}" < "${t_file}"
 
