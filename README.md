@@ -19,7 +19,7 @@ Done!
 
 Example of a `.env` file content:
 
-```bash
+```sh
 # Optional
 DB_HOST='localhost'
 DB_PORT=3306
@@ -37,33 +37,53 @@ DB_PASSWORD=
 
 ### Backup Database
 
-Default option if no argument passed. It creates a backup file: `{database}_{date}.sql.gz` file.
+It creates a backup file: `{database}_{date}.sql.gz` file.
 
 ```sh
-mysql-helper
+mysql-helper b
+mysql-helper backup
 ```
 
 You can ignore backup creation by using `--no-backup`
 
 ### Exporting Database to SQL
 
+Exports DB to `{database}.sql` file.
+
 ```sh
-mysql-helper -e
-mysql-helper --export
+mysql-helper e
 mysql-helper export
+# mysql-helper -e # DEPRECATED
+# mysql-helper --export # DEPRECATED
 ```
 
-Creates a `{database}.sql` file
 
 ### Importing SQL to Database
+
+Import a database content from `{database}.sql` file.
+
 ```sh
-mysql-helper -i
-mysql-helper --import
+mysql-helper i
 mysql-helper import
+# mysql-helper -i # DEPRECATED
+# mysql-helper --import # DEPRECATED
 ```
 
-Import a database content from `{database}.sql` file
+> Note: By default it will run `backup` automatically. To avoid this, pass `--no-auto-backup`.
 
-### Options
-- **`-t|--target [dir]`**: Customize the target directory.
-- **`--no-backup`**: Ignore the auto-creation of backup file before `import`/`export`.
+### Customize target dir
+
+By default, it will use the working directory to search files. In order to use a different target-dir:
+
+```sh
+mysql-helper (i|e|b) <target-dir>
+mysql-helper (i|e|b) --target <target-dir> # DEPRECATED
+```
+
+### More options
+
+Use --help to see more options.
+
+```sh
+mysql-helper --help
+```
