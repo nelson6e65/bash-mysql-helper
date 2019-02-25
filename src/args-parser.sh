@@ -244,7 +244,7 @@ function f_setup_target
     declare dir="${_arg_target_dir:?}"
     declare -i r=$?
 
-    if [[ ${_arg_target:?} != '' ]]; then
+    if [[ ! -z ${_arg_target} ]]; then
         echo -e "\nWARNING: «--target» option is DEPRECATED. Use <target-dir> instead."
 
         if [[ ${_arg_target_dir} == '.' ]]; then
