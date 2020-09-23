@@ -87,3 +87,8 @@ Use --help to see more options.
 ```sh
 mysql-helper --help
 ```
+
+## Credits
+
+Some tools used:
+- https://github.com/matejak/argbash
